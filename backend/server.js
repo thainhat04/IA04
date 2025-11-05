@@ -15,38 +15,31 @@ const ACCESS_TOKEN_EXPIRY = '15m'; // 15 minutes
 const REFRESH_TOKEN_EXPIRY = '7d'; // 7 days
 
 // Middleware
-// CORS Configuration - Allow specific origins
-const allowedOrigins = [
-  'http://localhost:5173',           // Local development
-  'http://localhost:3000',           // Local backend
-  'https://ia04-production.up.railway.app', // Your Railway backend
-  'https://ia-04-ecru.vercel.app',   // Your Vercel frontend
-  // Add more frontend URLs as needed
-];
-
+// CORS Configuration - More permissive for debugging
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log('CORS blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
+  origin: '*', // Allow all origins for now (restrict in production)
+  credentials: false, // Set to false when using origin: '*'
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Content-Length', 'Content-Type'],
   preflightContinue: false,
   optionsSuccessStatus: 204
 }));
+
+// Parse JSON bodies
 app.use(express.json());
+
+// Parse URL-encoded bodies
+app.use(express.urlencoded({ extended: true }));
 
 // Request logging middleware (for debugging)
 app.use((req, res, next) => {
+  console.log('='.repeat(50));
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  console.log('Origin:', req.headers.origin);
+  console.log('Content-Type:', req.headers['content-type']);
+  console.log('Body:', JSON.stringify(req.body));
+  console.log('='.repeat(50));
   next();
 });
 
@@ -114,11 +107,6 @@ const authenticateToken = (req, res, next) => {
 };
 
 /**
- * Handle preflight requests for /api/auth/login
- */
-app.options('/api/auth/login', cors());
-
-/**
  * Login endpoint - POST handler
  */
 app.post('/api/auth/login', async (req, res) => {
@@ -165,11 +153,6 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 /**
- * Handle preflight requests for /api/auth/refresh
- */
-app.options('/api/auth/refresh', cors());
-
-/**
  * Refresh token endpoint
  */
 app.post('/api/auth/refresh', (req, res) => {
@@ -211,11 +194,6 @@ app.post('/api/auth/refresh', (req, res) => {
     });
   });
 });
-
-/**
- * Handle preflight requests for /api/auth/logout
- */
-app.options('/api/auth/logout', cors());
 
 /**
  * Logout endpoint
@@ -292,11 +270,6 @@ app.get('/api/dashboard/activity', authenticateToken, (req, res) => {
     },
   ]);
 });
-
-/**
- * Handle preflight requests for /api/auth/register
- */
-app.options('/api/auth/register', cors());
 
 /**
  * Register endpoint (optional)
