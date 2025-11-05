@@ -113,44 +113,6 @@ const authenticateToken = (req, res, next) => {
 };
 
 /**
- * Root endpoint - helps verify server is running
- */
-app.get('/', (req, res) => {
-  res.json({
-    status: 'ok',
-    message: 'Express API Server is running',
-    endpoints: {
-      health: '/api/health',
-      login: 'POST /api/auth/login',
-      register: 'POST /api/auth/register',
-      refresh: 'POST /api/auth/refresh',
-      logout: 'POST /api/auth/logout',
-      me: 'GET /api/auth/me',
-      dashboard: {
-        stats: 'GET /api/dashboard/stats',
-        activity: 'GET /api/dashboard/activity',
-      },
-    },
-  });
-});
-
-/**
- * Health check endpoint
- */
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
-});
-
-/**
- * Login endpoint - handle OPTIONS for CORS preflight
- */
-app.options('/api/auth/login', (req, res) => {
-  res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.sendStatus(200);
-});
-
-/**
  * Login endpoint - POST handler
  */
 app.post('/api/auth/login', async (req, res) => {
