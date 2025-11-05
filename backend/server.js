@@ -19,10 +19,9 @@ const REFRESH_TOKEN_EXPIRY = '7d'; // 7 days
 const allowedOrigins = [
   'http://localhost:5173',           // Local development
   'http://localhost:3000',           // Local backend
-  'https://jwt-auth-backend-production.up.railway.app', // Your Railway backend
-  'https://ia-04-ecru.vercel.app',
-  // Add your Netlify/Vercel frontend URL here when deployed
-  // 'https://your-frontend.netlify.app',
+  'https://ia04-production.up.railway.app', // Your Railway backend
+  'https://ia-04-ecru.vercel.app',   // Your Vercel frontend
+  // Add more frontend URLs as needed
 ];
 
 app.use(cors({
@@ -38,8 +37,10 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 app.use(express.json());
 
@@ -113,10 +114,17 @@ const authenticateToken = (req, res, next) => {
 };
 
 /**
+ * Handle preflight requests for /api/auth/login
+ */
+app.options('/api/auth/login', cors());
+
+/**
  * Login endpoint - POST handler
  */
 app.post('/api/auth/login', async (req, res) => {
   console.log('Login endpoint hit - Method:', req.method, 'Path:', req.path);
+  console.log('Request headers:', req.headers);
+  console.log('Request body:', req.body);
   const { email, password } = req.body;
 
   // Validate input
@@ -155,6 +163,11 @@ app.post('/api/auth/login', async (req, res) => {
     refreshToken,
   });
 });
+
+/**
+ * Handle preflight requests for /api/auth/refresh
+ */
+app.options('/api/auth/refresh', cors());
 
 /**
  * Refresh token endpoint
@@ -198,6 +211,11 @@ app.post('/api/auth/refresh', (req, res) => {
     });
   });
 });
+
+/**
+ * Handle preflight requests for /api/auth/logout
+ */
+app.options('/api/auth/logout', cors());
 
 /**
  * Logout endpoint
@@ -276,6 +294,11 @@ app.get('/api/dashboard/activity', authenticateToken, (req, res) => {
 });
 
 /**
+ * Handle preflight requests for /api/auth/register
+ */
+app.options('/api/auth/register', cors());
+
+/**
  * Register endpoint (optional)
  */
 app.post('/api/auth/register', async (req, res) => {
@@ -338,10 +361,33 @@ app.use((err, req, res, next) => {
 });
 
 /**
+ * Root endpoint for health check
+ */
+app.get('/', (req, res) => {
+  res.json({
+    message: 'JWT Auth API Server',
+    status: 'running',
+    endpoints: {
+      auth: [
+        'POST /api/auth/login',
+        'POST /api/auth/register',
+        'POST /api/auth/refresh',
+        'POST /api/auth/logout',
+        'GET /api/auth/me'
+      ],
+      dashboard: [
+        'GET /api/dashboard/stats',
+        'GET /api/dashboard/activity'
+      ]
+    }
+  });
+});
+
+/**
  * Start server
  */
-app.listen(PORT, () => {
-  console.log(`\n🚀 Mock Backend Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n🚀 Mock Backend Server running on port ${PORT}`);
   console.log(`\n📋 Available endpoints:`);
   console.log(`   POST   /api/auth/login`);
   console.log(`   POST   /api/auth/register`);
