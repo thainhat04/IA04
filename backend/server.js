@@ -15,12 +15,32 @@ const ACCESS_TOKEN_EXPIRY = '15m'; // 15 minutes
 const REFRESH_TOKEN_EXPIRY = '7d'; // 7 days
 
 // Middleware
-app.use(cors(
-  {
-    origin: '*',
-    credentials: true,
-  }
-));
+// CORS Configuration - Allow specific origins
+const allowedOrigins = [
+  'http://localhost:5173',           // Local development
+  'http://localhost:3000',           // Local backend
+  'https://jwt-auth-backend-production.up.railway.app', // Your Railway backend
+  'https://ia-04-ecru.vercel.app',
+  // Add your Netlify/Vercel frontend URL here when deployed
+  // 'https://your-frontend.netlify.app',
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(express.json());
 
 // In-memory user database (for demo purposes)
